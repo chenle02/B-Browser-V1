@@ -10,12 +10,13 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Patch B-Browser V1.3
+      - name: Patch B-Browser V1.3 fix
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('app/src/main/java/com/chenboda01/bbrowserv1/MainActivity.java')
           s=p.read_text()
+          s=s.replace('import android.view.Gravity;','import android.view.Gravity;\nimport android.view.View;')
           s=s.replace('import android.widget.*;','import android.widget.*;\nimport android.view.animation.*;\nimport android.graphics.drawable.*;')
           s=s.replace('private TextView status;','private TextView status;\n    private TextView splash;\n    private FrameLayout frame;\n    private View fillBar;')
           s=s.replace('LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(7,19,30));','frame=new FrameLayout(this);LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(7,19,30));frame.addView(root,new FrameLayout.LayoutParams(-1,-1));')

@@ -10,20 +10,20 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Patch browser V1.2
+      - name: Patch B-Browser V1.3
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('app/src/main/java/com/chenboda01/bbrowserv1/MainActivity.java')
           s=p.read_text()
-          s=s.replace('private TextView status;','private TextView status;\n    private ProgressBar loading;')
-          s=s.replace('root.addView(top);','root.addView(top);\n        loading=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);loading.setMax(100);loading.setVisibility(android.view.View.GONE);root.addView(loading,new LinearLayout.LayoutParams(-1,dp(4)));')
-          s=s.replace('status.setText("B-Browser V1");','status.setText("B-Browser V1.2");')
-          s=s.replace('status.setText(p<100?"Loading "+p+"%":"Ready");','loading.setProgress(p);loading.setVisibility(p<100?android.view.View.VISIBLE:android.view.View.GONE);status.setText(p<100?"Loading":"Ready");')
-          old='setContentView(root);renderBookmarks();go(prefs.getString("last_url",HOME));'
-          new='setContentView(root);renderBookmarks();String start=null;try{android.net.Uri u=getIntent().getData();if(u!=null)start=u.toString();}catch(Exception e){}go(start==null?prefs.getString("last_url",HOME):start);'
-          s=s.replace(old,new)
-          s=s.replace('public void onBackPressed(){','protected void onNewIntent(android.content.Intent i){super.onNewIntent(i);try{android.net.Uri u=i.getData();if(u!=null)go(u.toString());}catch(Exception e){}}\n    public void onBackPressed(){')
+          s=s.replace('import android.widget.*;','import android.widget.*;\nimport android.view.animation.*;\nimport android.graphics.drawable.*;')
+          s=s.replace('private TextView status;','private TextView status;\n    private TextView splash;\n    private FrameLayout frame;\n    private View fillBar;')
+          s=s.replace('LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(7,19,30));','frame=new FrameLayout(this);LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(7,19,30));frame.addView(root,new FrameLayout.LayoutParams(-1,-1));')
+          s=s.replace('TextView logo=new TextView(this);logo.setText("🌐");logo.setTextSize(24);','TextView logo=new TextView(this);logo.setText("◉");logo.setTextColor(Color.rgb(80,220,255));logo.setTextSize(30);')
+          s=s.replace('status.setText("B-Browser V1");','status.setText("B-Browser V1.3");')
+          s=s.replace('status.setText(p<100?"Loading "+p+"%":"Ready");','status.setText(p<100?"Loading":"Ready");if(fillBar!=null){fillBar.getLayoutParams().width=Math.max(6,dp(260)*p/100);fillBar.requestLayout();if(p>=100)hideSplash();}')
+          s=s.replace('root.addView(webView,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);renderBookmarks();go(prefs.getString("last_url",HOME));','root.addView(webView,new LinearLayout.LayoutParams(-1,0,1));addSplash();setContentView(frame);renderBookmarks();String start=null;try{android.net.Uri u=getIntent().getData();if(u!=null)start=u.toString();}catch(Exception e){}go(start==null?prefs.getString("last_url",HOME):start);')
+          s=s.replace('public void onBackPressed(){','protected void onNewIntent(android.content.Intent i){super.onNewIntent(i);try{android.net.Uri u=i.getData();if(u!=null)go(u.toString());}catch(Exception e){}}\n    private GradientDrawable bg(int color,int stroke){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(10));if(stroke>0)g.setStroke(dp(2),Color.rgb(0,170,255));return g;}\n    private void addSplash(){FrameLayout sp=new FrameLayout(this);sp.setBackgroundColor(Color.BLACK);splash=new TextView(this);splash.setText("B-Browser V1.3\\nLOADING...");splash.setTextColor(Color.rgb(0,190,255));splash.setTextSize(30);splash.setGravity(Gravity.CENTER);FrameLayout.LayoutParams tp=new FrameLayout.LayoutParams(-1,dp(260),Gravity.CENTER);sp.addView(splash,tp);FrameLayout box=new FrameLayout(this);box.setBackground(bg(Color.BLACK,1));FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(dp(260),dp(28),Gravity.CENTER);bp.topMargin=dp(120);fillBar=new View(this);fillBar.setBackgroundColor(Color.rgb(255,30,30));box.addView(fillBar,new FrameLayout.LayoutParams(dp(8),-1));sp.addView(box,bp);frame.addView(sp,new FrameLayout.LayoutParams(-1,-1));sp.setTag("splash");AlphaAnimation aa=new AlphaAnimation(.45f,1f);aa.setDuration(500);aa.setRepeatMode(Animation.REVERSE);aa.setRepeatCount(Animation.INFINITE);box.startAnimation(aa);}\n    private void hideSplash(){View sp=frame.findViewWithTag("splash");if(sp!=null){sp.clearAnimation();frame.removeView(sp);}}\n    public void onBackPressed(){')
           p.write_text(s)
           PY
       - run: gradle :app:assembleDebug

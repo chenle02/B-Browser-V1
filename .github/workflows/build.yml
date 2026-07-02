@@ -10,6 +10,22 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+      - name: Patch browser V1.2
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/src/main/java/com/chenboda01/bbrowserv1/MainActivity.java')
+          s=p.read_text()
+          s=s.replace('private TextView status;','private TextView status;\n    private ProgressBar loading;')
+          s=s.replace('root.addView(top);','root.addView(top);\n        loading=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);loading.setMax(100);loading.setVisibility(android.view.View.GONE);root.addView(loading,new LinearLayout.LayoutParams(-1,dp(4)));')
+          s=s.replace('status.setText("B-Browser V1");','status.setText("B-Browser V1.2");')
+          s=s.replace('status.setText(p<100?"Loading "+p+"%":"Ready");','loading.setProgress(p);loading.setVisibility(p<100?android.view.View.VISIBLE:android.view.View.GONE);status.setText(p<100?"Loading":"Ready");')
+          old='setContentView(root);renderBookmarks();go(prefs.getString("last_url",HOME));'
+          new='setContentView(root);renderBookmarks();String start=null;try{android.net.Uri u=getIntent().getData();if(u!=null)start=u.toString();}catch(Exception e){}go(start==null?prefs.getString("last_url",HOME):start);'
+          s=s.replace(old,new)
+          s=s.replace('public void onBackPressed(){','protected void onNewIntent(android.content.Intent i){super.onNewIntent(i);try{android.net.Uri u=i.getData();if(u!=null)go(u.toString());}catch(Exception e){}}\n    public void onBackPressed(){')
+          p.write_text(s)
+          PY
       - run: gradle :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
